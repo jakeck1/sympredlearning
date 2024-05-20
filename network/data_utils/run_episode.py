@@ -23,16 +23,16 @@ def store_k_states_rule(i,k):
 
 
 
-def run_episode(model,input,dt,lr=1.0,iterations = None,store_states_rule = None):
+def run_episode(model,inp,dt,lr=1.0,iterations = None,store_states_rule = None):
 
     out = []
 
-    if isinstance(input,InputGenerator):
-        input_generator = input
+    if isinstance(inp,InputGenerator):
+        input_generator = inp
 
 
     else:
-        try: input_generator = IterableInputGenerator(input)
+        try: input_generator = IterableInputGenerator(inp)
 
         except: raise TypeError('input must either be an InputGenerator or an iterable')
 

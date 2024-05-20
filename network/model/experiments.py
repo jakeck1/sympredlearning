@@ -11,12 +11,12 @@ import numpy as np
 def run_convergence_experiment(
         n_iterations: int=1,
         n_saves: int = int(1e5),
-        dt: float = 0.01,
+        dt: float = 0.001,
         lr =1.0,
         n_cells_layer_1: int = 40,
         n_cells_layer_2: int = 40,
         tau_learning: float = 0.12,
-        tau_learning_f: float =0.21,
+        tau_learning_f: float =0.12,
         tau_activity: float = 0.001,
         gamma_r: float = 0.7,
         gamma_f: float =0.7,
@@ -119,38 +119,43 @@ def run_convergence_experiment(
 
     losses_W = []
     losses_V = []
-
-    if loss_relative_to_first_step:
-        diff_W_0, diff_V_0 = convergence_diffs(model[0].W_r, model[0].W_f, model[0].recurrent_weights.learning_rule.alpha,
+    A,B,Q,T,gamma_r = quantities_for_convergence_diff(model[0].recurrent_weights.learning_rule.alpha,
                                            model[0].recurrent_weights.learning_rule.beta,
                                            model[0].forward_weights.learning_rule.alpha,
                                            model[0].forward_weights.learning_rule.beta,
                                            P, Phi_1, Phi_2, model[0].gamma_r, model[1].gamma_f)
+
+    if loss_relative_to_first_step:
+        diff_W_0, diff_V_0 = conv_diff(model[0].W_r, model[0].W_f, A,B,Q,T,gamma_r)
         loss_W_0 = np.linalg.norm(diff_W_0)
         loss_V_0 = np.linalg.norm(diff_V_0)
 
     for i in range(n_saves):
         out = run_episode(model, input_generator, dt,lr = lr,iterations=n_iterations)
-
-        diff_W,diff_V = convergence_diffs(model[0].W_r,model[0].W_f,model[0].recurrent_weights.learning_rule.alpha,
-                                          model[0].recurrent_weights.learning_rule.beta,
-                                          model[0].forward_weights.learning_rule.alpha,
-                                          model[0].forward_weights.learning_rule.beta,
-                                          P,Phi_1,Phi_2,model[0].gamma_r,model[1].gamma_f)
-
-        loss_W = np.linalg.norm(diff_W)
-        loss_V = np.linalg.norm(diff_V)
-        if loss_relative_to_first_step:
-            loss_W/=loss_W_0
-            loss_V/=loss_V_0
-
         if not only_final_loss:
+            diff_W,diff_V = conv_diff(model[0].W_r,model[0].W_f,A,B,Q,T,gamma_r)
+
+            loss_W = np.linalg.norm(diff_W)
+            loss_V = np.linalg.norm(diff_V)
+            if loss_relative_to_first_step:
+                loss_W/=loss_W_0
+                loss_V/=loss_V_0
+
+
 
             losses_W.append(loss_W)
             losses_V.append(loss_V)
 
     if only_final_loss:
-        return loss_W,loss_V
+            diff_W,diff_V = conv_diff(model[0].W_r,model[0].W_f,A,B,Q,T,gamma_r)
+
+            loss_W = np.linalg.norm(diff_W)
+            loss_V = np.linalg.norm(diff_V)
+            if loss_relative_to_first_step:
+                loss_W/=loss_W_0
+                loss_V/=loss_V_0
+        
+            return loss_W,loss_V
 
     else:
 
@@ -378,9 +383,9 @@ def circular_rw_experiment(n_states=30,n_reps=30,dt=0.1):
 
         for q in range(n_reps):
 
-            model = create_model((n_cells_layer_1, n_cells_layer_2), ((0.5, 0.5), (1.0, 0.0)))
+            model = create_model((n_cells_layer_1, n_cells_layer_2), ((0.5, 0.5), (1.0, 0.0)),gamma_r=0.9)
 
-            for i in range(int(1e4)):
+            for i in range(int(1e5)):
                 # train model to learn SR
                 inp, state = next(input_generator)
                 model.update(inp, dt=dt)

@@ -20,8 +20,8 @@ def create_generalization_plot(steps_sym,steps_asym,stds=(None,None),save_path=N
 
 
     fig, ax = plt.subplots(figsize=figsize)
-    ax.set_xlabel("Episode number")
-    ax.set_ylabel("Steps taken")
+    ax.set_xlabel("Episode number",fontsize=14)
+    ax.set_ylabel("Steps taken",fontsize=14)
 
 
     for i in range(2):
@@ -49,7 +49,7 @@ def create_generalization_plot(steps_sym,steps_asym,stds=(None,None),save_path=N
     if lowerbound:
         ax.axhline(lowerbound, 0, len(mean), linestyle='--', color='grey',alpha=0.5)
 
-
+    plt.title(title,fontsize=22)
     if save_path:
         if overwrite:
             plt.savefig(save_path)
@@ -78,8 +78,10 @@ def create_violin_plot(steps_sym,steps_asym,save_path=None,overwrite=True,**plot
 
 
     sns.set_context("paper")
-    violins = sns.violinplot(df, x = 'Agent',y='Deviation from Minimal Path Length',hue='Agent',palette=colors,density_norm='width',alpha=0.5,cut = 0.0)
-
+    violins = sns.violinplot(df, x = 'Agent',y='Deviation from Minimal Path Length',palette=colors,density_norm='width',alpha=0.1,cut = 0.0)
+    plt.setp(ax.collections, alpha=.5)
+    ax.set_ylabel("Suboptimality",fontsize=14)
+    plt.title(title,fontsize=22)
     if save_path:
         if overwrite:
             plt.savefig(save_path)

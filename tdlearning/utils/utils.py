@@ -100,7 +100,7 @@ def run_copy_episode(env,
 
 
 
-def save_generalization_data(data,path,agents = None,suffices=None,makepath=True,overwrite=False):
+def save_generalization_data(data,path,agents = None,suffices=None,makepath=True,overwrite=True):
 
     if agents is None:
         agents = ['symmetric','asymmetric']

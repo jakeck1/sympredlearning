@@ -92,13 +92,14 @@ def create_circular_rw_plots(SRs):
 
 
 
-def plot_convergence_matrix(MW,parameters,max_value=1e4,logscale=False,nan_on_antidiagonal=False,title = None):
+def plot_convergence_matrix(MW,parameters,max_value=None,logscale=False,nan_on_antidiagonal=False,title = None):
 
 
-
-    MW[MW>max_value]=np.nan
+    MW = MW.copy()
+    if max_value:
+        MW[MW>max_value]=np.nan
     if logscale:
-         MW = np.log(MW+1.0)
+         MW = np.log(MW+1e-16)
 
     MW = np.nanmean(MW,axis=0)
     if nan_on_antidiagonal:
@@ -106,11 +107,12 @@ def plot_convergence_matrix(MW,parameters,max_value=1e4,logscale=False,nan_on_an
 
 
     fig,ax = plt.subplots(figsize=[12,10])
+   
     cax = ax.matshow(MW)
     ax.set_xticks(np.arange(len(parameters)))
     ax.set_yticks(np.arange(len(parameters)))
-    ax.set_xlabel(r'$\alpha$')
-    ax.set_ylabel(r'$\beta$')
+    ax.set_xlabel(r'$\alpha$',fontsize=16)
+    ax.set_ylabel(r'$\beta$',fontsize=16)
     ax.set_xticklabels(np.round(parameters,2))
     ax.set_yticklabels(np.round(parameters,2))
    # fig.colorbar(cax)
@@ -121,11 +123,15 @@ def plot_convergence_matrix(MW,parameters,max_value=1e4,logscale=False,nan_on_an
     cbar_ax = divider.append_axes("right", size="5%", pad=0.05)
     colorbar = plt.colorbar(cax, cax=cbar_ax)
     # fig.colorbar(cax)
-    colorbar.set_label(r'$\frac{\mathcal{L}(W,W^*)}{\mathcal{L}(W_0,W^*)}$',fontsize=20)
+    if logscale:
+            colorbar.set_label(r'$\ln{\frac{\mathcal{L}(W,W^*)}{\mathcal{L}(W_0,W^*)}}$',fontsize=20)
+
+    else:
+        colorbar.set_label(r'$\frac{\mathcal{L}(W,W^*)}{\mathcal{L}(W_0,W^*)}$',fontsize=20)
 
     if title is None:
          title = r'Convergence for different $\alpha,\beta$'
-    plt.suptitle(title,fontsize=30)
+    plt.suptitle(title,fontsize=24)
 
     return fig
 

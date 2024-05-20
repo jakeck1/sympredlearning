@@ -298,7 +298,7 @@ class GraphEnvWrapper(GraphEnv):
 
         self.running = False
         self.obs_mode = obs_type
-        print(self.obs_mode,'obsmode')
+      #  print(self.obs_mode,'obsmode')
         self.torch_obs = torch_obs
         self.base_objects = {"rewards": {}}
         self.T = None

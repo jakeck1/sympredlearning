@@ -7,7 +7,7 @@ import warnings
 
 def create_model(n_cells,
                  learning_params,
-                 tau_learning=0.08,
+                 tau_learning=0.12,
                  tau_activity=0.0,
                  gamma_r=0.7,
                  gamma_f = None,
@@ -45,13 +45,57 @@ def create_model(n_cells,
 
 
 
+def quantities_for_convergence_diff(alpha_1,beta_1,alpha_2,beta_2,P,Phi_1,Phi_2,gamma_r,gamma_f):
+    
+    Pi = np.diag(get_stationary_dist(P))
+    c_1 = alpha_1 + beta_1+1e-12
+    c_2 = alpha_2 + beta_2+1e-12
+
+    J_1 = ((alpha_1/c_1)* P.T@Pi + (beta_1/c_1)*Pi@P)
+
+    J_2 = ((alpha_2 / c_2) * P.T @ Pi + (beta_2 / c_2) * Pi @ P)
+
+    
+    A = Phi_1@Pi@Phi_1.T
+
+    B = Phi_1 @J_1 @Phi_1.T
+
+    Q = Phi_1 @(Pi - gamma_f* J_2) @ Phi_1.T
+    
+    T = Phi_2@J_2@Phi_1.T
+    
+    return A,B,Q,T,gamma_r
+    
+    
+def conv_diff(W,V,A,B,Q,T,gamma_r):
+    
+    
+    diff_W = W@A - B
+
+    
+    R = np.eye(W.shape[0])-gamma_r*W
+
+    #inversion but cheaper
+    try:
+        S = np.linalg.solve(R,Q)
+    except:
+        S, _, _, _ = np.linalg.lstsq(R, Q, rcond=None)
+        warnings.warn('Had to use leastsquares instead of exact solution. This might indicate that the recurrent matrix W behaves unexpectedly',RuntimeWarning)
+
+    diff_V = V@S - T
+    
+    
+    return diff_W, diff_V
+    
+    
+
 def convergence_diffs(W,V,alpha_1,beta_1,alpha_2,beta_2,P,Phi_1,Phi_2,gamma_r,gamma_f):
 
 
 
     Pi = np.diag(get_stationary_dist(P))
-    c_1 = alpha_1 + beta_1
-    c_2 = alpha_2 + beta_2
+    c_1 = alpha_1 + beta_1+1e-12
+    c_2 = alpha_2 + beta_2+1e-12
 
     J_1 = ((alpha_1/c_1)* P.T@Pi + (beta_1/c_1)*Pi@P)
 

@@ -25,7 +25,7 @@ def normalize_with_threshold(arr, threshold=1e-9):
 
 class TDSR_WM(TDSR):
 
-    '''td-SR agent using a deterministic world model'''
+    '''td-SR agent using a (deterministic) world model'''
 
     def __init__(
         self,
@@ -45,7 +45,7 @@ class TDSR_WM(TDSR):
         backward_weight: float = 0.0,
         learn_SR: bool = True,
         learn_reward: bool =True,
-        learn_model: bool = True,
+        learn_model: bool = False,
         T: np.array = None):
 
 
@@ -63,16 +63,16 @@ class TDSR_WM(TDSR):
 
         self.forward_weight = forward_weight
         self.backward_weight = backward_weight
-        #assert forward_weight+backward_weight !=0
         self.normalizing_factor = self.forward_weight + self.backward_weight
 
         self.learn_SR = learn_SR
         self.learn_reward = learn_reward
         self.learn_model = learn_model
-        self.learn_T = False
+        
         if T is None:
             T = np.zeros([action_size, state_size, state_size],dtype = float)
-            self.learn_T = True
+            self.learn_model = True
+      
         self.T = T
         if M_init is None:
             self.M = np.eye(state_size)
@@ -80,9 +80,11 @@ class TDSR_WM(TDSR):
             self.M = np.random.randn(state_size,state_size)*M_init
         else:
             self.M = M_init
+        self.init_M = self.M.copy()
         self.visited = np.zeros((action_size, state_size), dtype=bool)  # Keep track of visited state-action pairs
+        self.K = np.einsum('ijk,kl',self.T,self.M)
 
-
+   
     def q_estimate(self, state):
 
         return self.K[:, state, :] @ self.w
@@ -93,12 +95,14 @@ class TDSR_WM(TDSR):
     def _update(self, current_exp, **kwargs):
         s, s_a, s_1, r, d = current_exp
         return_update = kwargs.get('return_update',False)
+       
         if self.learn_SR:
                  m_error = self.update_sr(s, s_a, s_1, d, **kwargs)
         if self.learn_reward:
                 w_error = self.update_w(s, s_1, r)
         if self.learn_model:
                 t_error = self.update_t(s,s_a,s_1)
+       
         q_error = self.q_error(s, s_a, s_1, r, d)
 
         if return_update:
@@ -109,14 +113,14 @@ class TDSR_WM(TDSR):
 
 
     def update_t(self, s, s_a, s_1):
-
-        if not self.learn_T:
-            return None
+        
         if not self.visited[s_a, s]:
 
-            #next_onehot = utils.onehot(s_1, self.state_size)
-            self.T[s_a, s,s_1] = 1.0 #next_onehot
+            self.T[s_a, s,s_1] = 1.0
+            
             self.visited[s_a, s] = True
+            
+            self.K[s_a,s,:] += self.T[s_a,s,s_1]*self.M[s_1,:]
         return None
 
 
@@ -154,11 +158,13 @@ class TDSR_WM(TDSR):
                     m_error_backward = m_error_backward*normalize_update
 
 
+                delta_forward = alpha*self.lr * m_error_forward
+                delta_backward = beta*self.lr * m_error_backward
+                self.M[s, :] += delta_forward
+                self.M[s_1,:] += delta_backward
 
-
-                self.M[s, :] += alpha*self.lr * m_error_forward
-                self.M[s_1,:] += beta*self.lr * m_error_backward
-
+                self.K+= np.einsum('ij,k->ijk', self.T[:, :, s], delta_forward)
+                self.K+= np.einsum('ij,k->ijk', self.T[:, :, s_1], delta_backward)
 
             return alpha*m_error_forward+beta*m_error_backward
 
@@ -171,21 +177,16 @@ class TDSR_WM(TDSR):
         if M is None:
             M = self.M
 
-        Q = np.einsum('ijk,kl',self.T,M).dot(goal)
+        #Q = np.einsum('ijk,kl',self.T,M).dot(goal)
 
-        return self.base_get_policy(Q)
+        return self.base_get_policy(self.Q)
 
     def get_M_states(self):
 
         return self.M
-    @property
-    def K(self):
-        return np.einsum('ijk,kl',self.T,self.M)
+
     @property
     def Q(self):
         return np.einsum('...i,...i',self.K,self.w)
-
-
-
 
 
