@@ -108,68 +108,54 @@ def load_shift_data(path, weightnames=None, suffices=None):
 
 
 
-def save_circular_rw_data(walks,SRs,path,makepath=True,overwrite=False,suffices=None):
+def save_circular_rw_data(walks, SRs, path, makepath=True, overwrite=False, suffices=None):
+    if makepath and not os.path.exists(path):
+        os.makedirs(path)
 
-    if makepath:
-        if not os.path.exists(path):
-            os.makedirs(path)
+    if isinstance(suffices, str):
+        suffices = [suffices]
 
-    if isinstance(suffices,str):
-        suffices = list(suffices)
+    # Function to construct the file name with suffices
+    def construct_file_name(base_name):
+        file_name = os.path.join(path, base_name)
+        if suffices:
+            for suffix in suffices:
+                file_name += '_' + suffix
+        return file_name + '.npz'
 
-
-
-
-
-    file_name = os.path.join(path,'walks')
-    if suffices is not None:
-        for suffix in suffices:
-            file_name += '_' + suffix
-    file_name +='.npz'
-
-
-    if (not overwrite) and (os.path.isfile(file_name)):
-        print('file at {} already exists, set overwrite=True if you want to create data anyway'.format(file_name))
-
+    # Save walks
+    walks_file_name = construct_file_name('walks')
+    if (not overwrite) and os.path.isfile(walks_file_name):
+        print(f'File at {walks_file_name} already exists. Set overwrite=True if you want to create data anyway.')
     else:
-        np.savez(file_name,walks)
-        print('saved data at {}'.format(file_name))
+        np.savez(walks_file_name, **walks)
+        print(f'Saved data at {walks_file_name}')
 
-
-
-    file_name = os.path.join(path,'SRs')
-    if suffices is not None:
-        for suffix in suffices:
-            file_name += '_' + suffix
-    file_name +='.npz'
-
-
-    if (not overwrite) and (os.path.isfile(file_name)):
-        print('file at {} already exists, set overwrite=True if you want to create data anyway'.format(file_name))
-
+    # Save SRs
+    SRs_file_name = construct_file_name('SRs')
+    if (not overwrite) and os.path.isfile(SRs_file_name):
+        print(f'File at {SRs_file_name} already exists. Set overwrite=True if you want to create data anyway.')
     else:
-        np.savez(file_name,SRs)
-        print('saved data at {}'.format(file_name))
+        np.savez(SRs_file_name, **SRs)
+        print(f'Saved data at {SRs_file_name}')
 
+def load_circular_rw_data(path, suffices=None):
+    # Function to construct the file name with suffices
+    def construct_file_name(base_name):
+        file_name = os.path.join(path, base_name)
+        if suffices:
+            for suffix in suffices:
+                file_name += '_' + suffix
+        return file_name + '.npz'
 
-def load_circular_rw_data(path,suffices):
+    # Load walks
+    walks_file_name = construct_file_name('walks')
+    walks_data = np.load(walks_file_name, allow_pickle=True)
+    walks = {key: walks_data[key] for key in walks_data.files}
 
-    file_name = os.path.join(path, 'walks')
-    if suffices is not None:
-        for suffix in suffices:
-            file_name += '_' + suffix
-    file_name += '.npz'
+    # Load SRs
+    SRs_file_name = construct_file_name('SRs')
+    SRs_data = np.load(SRs_file_name, allow_pickle=True)
+    SRs = {key: SRs_data[key] for key in SRs_data.files}
 
-    walks = np.load(file_name)
-
-
-
-    file_name = os.path.join(path, 'SRs')
-    if suffices is not None:
-        for suffix in suffices:
-            file_name += '_' + suffix
-    file_name += '.npz'
-
-    SRs = np.load(file_name)
-
-    return walks,SRs
+    return walks, SRs
