@@ -15,6 +15,7 @@ def create_generalization_plot(steps_sym,steps_asym,stds=(None,None),save_path=N
     title = plot_params.get('title','Generalization Performance of Agents')
     hlineheight  =plot_params.get('hline_height',170)
     lowerbound = plot_params.get('lower_bound',None)
+    legend = plot_params.get('legend',False)
     #print(lowerbound)
 
 
@@ -49,7 +50,9 @@ def create_generalization_plot(steps_sym,steps_asym,stds=(None,None),save_path=N
     if lowerbound:
         ax.axhline(lowerbound, 0, len(mean), linestyle='--', color='grey',alpha=0.5)
 
-    plt.title(title,fontsize=22)
+    plt.title(title,fontsize=20)
+    if legend:
+        plt.legend()
     if save_path:
         if overwrite:
             plt.savefig(save_path)
@@ -57,7 +60,7 @@ def create_generalization_plot(steps_sym,steps_asym,stds=(None,None),save_path=N
 
 
 
-def create_violin_plot(steps_sym,steps_asym,save_path=None,overwrite=True,**plot_params):
+def create_violin_plot(steps_sym,steps_asym,save_path=None,overwrite=True,ax = None,**plot_params):
 
     data = [steps_sym, steps_asym]
     agents = ['symmetric', 'asymmetric']
@@ -66,8 +69,8 @@ def create_violin_plot(steps_sym,steps_asym,save_path=None,overwrite=True,**plot
     figsize = plot_params.get('figsize', [12, 5])
     title = plot_params.get('title', 'Generalization Performance of Agents')
 
-
-    fig, ax = plt.subplots(figsize=figsize)
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
 
 
     col = np.hstack(data)
@@ -78,11 +81,13 @@ def create_violin_plot(steps_sym,steps_asym,save_path=None,overwrite=True,**plot
 
 
     sns.set_context("paper")
-    violins = sns.violinplot(df, x = 'Agent',y='Deviation from Minimal Path Length',palette=colors,density_norm='width',alpha=0.1,cut = 0.0)
+    violins = sns.violinplot(df, x = 'Agent',y='Deviation from Minimal Path Length',palette=colors,density_norm='width',alpha=0.1,cut = 0.0,ax=ax)
     plt.setp(ax.collections, alpha=.5)
     ax.set_ylabel("Suboptimality",fontsize=14)
-    plt.title(title,fontsize=22)
+    
+    violins.set_xticklabels(violins.get_xticklabels(), fontsize=14)
+    ax.set_title(title,fontsize=20)
     if save_path:
         if overwrite:
             plt.savefig(save_path)
-    return fig,ax
+    return ax

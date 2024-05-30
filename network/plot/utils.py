@@ -92,9 +92,13 @@ def create_circular_rw_plots(SRs):
 
 
 
-def plot_convergence_matrix(MW,parameters,max_value=None,logscale=False,nan_on_antidiagonal=False,title = None):
+def plot_convergence_matrix(MW,parameters,max_value=None,logscale=False,nan_on_antidiagonal=False,title = None,xlabel = None,ylabel = None):
 
-
+    
+    if xlabel is None:
+        xlabel = r'$\alpha$'
+    if ylabel is None:
+        ylabel = r'$\beta$'
     MW = MW.copy()
     if max_value:
         MW[MW>max_value]=np.nan
@@ -111,8 +115,8 @@ def plot_convergence_matrix(MW,parameters,max_value=None,logscale=False,nan_on_a
     cax = ax.matshow(MW)
     ax.set_xticks(np.arange(len(parameters)))
     ax.set_yticks(np.arange(len(parameters)))
-    ax.set_xlabel(r'$\alpha$',fontsize=16)
-    ax.set_ylabel(r'$\beta$',fontsize=16)
+    ax.set_xlabel(xlabel,fontsize=30)
+    ax.set_ylabel(ylabel,fontsize=30)
     ax.set_xticklabels(np.round(parameters,2))
     ax.set_yticklabels(np.round(parameters,2))
    # fig.colorbar(cax)
@@ -124,14 +128,14 @@ def plot_convergence_matrix(MW,parameters,max_value=None,logscale=False,nan_on_a
     colorbar = plt.colorbar(cax, cax=cbar_ax)
     # fig.colorbar(cax)
     if logscale:
-            colorbar.set_label(r'$\ln{\frac{\mathcal{L}(W,W^*)}{\mathcal{L}(W_0,W^*)}}$',fontsize=20)
+            colorbar.set_label(r'$\ln{\frac{\mathcal{L}(W,W^*)}{\mathcal{L}(W_0,W^*)}}$',fontsize=30)
 
     else:
-        colorbar.set_label(r'$\frac{\mathcal{L}(W,W^*)}{\mathcal{L}(W_0,W^*)}$',fontsize=20)
+        colorbar.set_label(r'$\frac{\mathcal{L}(W,W^*)}{\mathcal{L}(W_0,W^*)}$',fontsize=24)
 
     if title is None:
          title = r'Convergence for different $\alpha,\beta$'
-    plt.suptitle(title,fontsize=24)
+    plt.suptitle(title,fontsize=30)
 
     return fig
 
